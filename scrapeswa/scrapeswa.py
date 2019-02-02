@@ -1,4 +1,3 @@
-
 import requests
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup
@@ -18,8 +17,50 @@ from datetime import datetime,timedelta
 timeRE=re.compile(r'\d{1,2}:\d{1,2}[A|P]M',re.M)
 
 conditions=[]
+def flightFactory(params):
+    economyFare=Fare("Economy",params["Economy"]["fare"],params["Economy"]["earn"],params["Economy"]["pts"])
+    businessFare=Fare("Business",params["Business"]["fare"],params["Business"]["earn"],params["Business"]["pts"])
+    anytimeFare=Fare("Anytime",params["Anytime"]["fare"],params["Anytime"]["earn"],params["Anytime"]["pts"])
 
-from models import *
+    flight=SWAFlight(params["Flight"],params["src"],params["dst"],economyFare,anytimeFare,businessFare)
+
+    return flight
+class Fare(object):
+    def __init__(self,fltclass,fare,earn,pts):
+        self.flightClass=fltclass
+        self.fare=fare
+        self.earn=earn
+        self.pts=pts
+        self.ppd=pts/fare
+        self.epd=earn/fare
+    def getPointValue(self):
+        return 1/self.ppd
+    def __str__(self):
+        return self.flightClass+" costs $"+str(self.fare)+" ("+str(self.pts)+"pts)"+" earning "+str(self.earn)+" pts"
+
+class SWAFlight(object):
+    def __init__(self,flightNum,src,dst,economyFare,anytimeFare,businessFare):
+        self.flight=flightNum
+        self.src=src
+        self.dst=dst
+        self.economy=economyFare
+        self.anytime=anytimeFare
+        self.business=businessFare
+    def __str__(self):
+        printstr= ''
+        printstr+= "Flight:"+str(sortedOut[0]["Flight"])+" Leaving "+sortedOut[0]['src']+" "+datetime.strftime(sortedOut[0]['Leave'],"%a '%I:%M %p") + "\n"
+        printstr+= str(self.getBestFare())
+
+        return printstr
+    def getBestFare(self):
+        if self.economy is not None:
+            return self.economy
+        elif self.anytime is not None:
+            return self.anytime
+        elif self.business is not None:
+            return self.business
+        else:
+            raise AttributeError("No fare avaliable")
 
 
 def getSWURL(src,dst,outDate,inDate,pts=False):
@@ -122,41 +163,47 @@ def getFriday(date):
 
 
 
-def parseRoundTrip(src,dst,outDate,backDate):
+def getRoundTrip(src,dst,outDate,returnDate,returnObject=False):
+    #holder lists for the flights
+    outBound=[]
+    returnBound=[]
 
-    url=getSWURL(src,dst,outDate,backDate)
-    #print(url)
+    #construct SWA website's URL for the search
+    url=getSWURL(src,dst,outDate,returnDate)
+
+    ## wail untill page is fully loaded
     driver.get(url)
-    timeout = 8
+    timeout = 10
     try:
         element_present = EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-product-0 div div div div div div span div div fieldset div div .input--text'))
         WebDriverWait(driver, timeout).until(element_present)
     except TimeoutException:
         print("Timed out waiting for page to load")
-    #print("proceding")
 
+    ## get all outbound flight info, grabbing fare info
     elements=driver.find_elements_by_css_selector("#air-booking-product-0 div span ul li")
-    Outbound=[]
     for element in elements:
-        Outbound+= filter(None, [parseCard(str(element.get_attribute('innerHTML')),outDate)])
+        outBound+= filter(None, [parseCard(str(element.get_attribute('innerHTML')),outDate)])
 
-
+    ## get all return flight info, grabbing fare info
     elements=driver.find_elements_by_css_selector("#air-booking-product-1 div span ul li")
-    Returnbound=[]
     for element in elements:
-        Returnbound+= filter(None, [parseCard(str(element.get_attribute('innerHTML')),backDate)])
+        returnBound+= filter(None, [parseCard(str(element.get_attribute('innerHTML')),returnDate)])
 
-    for flight in Outbound: # designate src and dst
+    # fill in additional info for the flight dictionary
+    for flight in outBound: # designate src and dst
         flight['src']=src
         flight['dst']=dst
-    for flight in Returnbound:
+    for flight in returnBound:
         flight['src']=dst
         flight['dst']=src
 
     #### now, fill in the blank for point cost
 
-    url=getSWURL(src,dst,outDate,backDate,pts=True)
+    url=getSWURL(src,dst,outDate,returnDate,pts=True)
     driver.get(url)
+
+    ## Wait untill page is fully loaded, using this element as a indicator
     timeout = 10
     try:
         element_present = EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-product-0 div div div div div div span div div fieldset div div .input--text'))
@@ -165,30 +212,26 @@ def parseRoundTrip(src,dst,outDate,backDate):
         print("Timed out waiting for page to load")
     print("page loaded")
 
+    ## grab all the individual cards for out boud flights
     elements=driver.find_elements_by_css_selector("#air-booking-product-0 div span ul li")
     for element in elements:
-        parseCardPts(str(element.get_attribute('innerHTML')) , Outbound)
+        parseCardPts(str(element.get_attribute('innerHTML')) , outBound)
 
-
+    ## grab all the individual cards for return bound flights
     elements=driver.find_elements_by_css_selector("#air-booking-product-1 div span ul li")
     for element in elements:
-        parseCardPts(str(element.get_attribute('innerHTML')) , Returnbound)
+        parseCardPts(str(element.get_attribute('innerHTML')) , returnBound)
 
-
-    return Outbound,Returnbound
-def fetchWeekend(date):
-    mySortedOut,mySortedBack=fetchMyWeekend(date)
-    herSortedOut,herSortedBack=fetchHerWeekend(date)
-
-    dbWeekend=Weekend(friday=getFriday(date),my_outbound_id=mySortedOut[0]['obj'].id,my_return_id=mySortedBack[0]['obj'].id
-                        ,her_outbound_id=herSortedOut[0]['obj'].id,her_return_id=herSortedBack[0]['obj'].id)
-    session.add(dbWeekend)
-    session.commit()
-
-
-    # for i in range(1):
-    #     fetchMyWeekend(datetime(2019,2,15)+timedelta(days=i*7))
-    #     fetchHerWeekend(datetime(2019,2,15)+timedelta(days=i*7))
-#     main()
-# with open("card.html","r") as inFile:
-#     print(parseCard(inFile.read()),)
+    ## return results
+    if returnObject:
+        # return SWAFlight Objects
+        outBoundObjs=[]
+        returnBoundObjs=[]
+        for flightDict in outBound:
+            outBoundObjs.append(flightFactory(flightDict))
+        for flightDict in returnBound:
+            returnBoundObjs.append(flightFactory(flightDict))
+        return outBoundObjs,returnBoundObjs
+    else:
+        # return dictionary
+        return outBound,returnBound
