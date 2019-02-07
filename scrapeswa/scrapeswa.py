@@ -1,4 +1,5 @@
 import requests
+import sys
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -17,6 +18,8 @@ from datetime import datetime,timedelta
 timeRE=re.compile(r'\d{1,2}:\d{1,2}[A|P]M',re.M)
 
 conditions=[]
+
+
 def flightFactory(params):
     economyFare=Fare("Economy",params["Economy"]["fare"],params["Economy"]["earn"],params["Economy"]["pts"])
     businessFare=Fare("Business",params["Business"]["fare"],params["Business"]["earn"],params["Business"]["pts"])
@@ -118,7 +121,7 @@ def parseCard(soup,date):
                 result=findFarePts.search(infoLabel)
                 results["Economy"]['fare']=int(result.group(1))
                 results["Economy"]['earn']=int(result.group(2))
-        print(results)
+        #print(results)
         return results
             # return(html) # {Flight:123,Leave:Datetime,Arrive:Datetime,bestAval:'Anytime',Business:{fare:None,earn:None,pts:None},Anytime:{fare:120,earn:2500,pts:4500},Economy:{fare:120,earn:2500,pts:4500}}
 
@@ -171,7 +174,9 @@ def getFriday(date):
 
 
 
-def getRoundTrip(src,dst,outDate,returnDate,returnObject=False):
+def getRoundTrip(src,dst,outDate,returnDate,returnObject=False,mute=True):
+    # print("lol")
+    # print(progressTotal)
     #holder lists for the flights
     outBound=[]
     returnBound=[]
@@ -189,6 +194,9 @@ def getRoundTrip(src,dst,outDate,returnDate,returnObject=False):
         print("Timed out waiting for page to load")
         print(url)
         return
+    if not mute:
+        print("...",end ="")
+        sys.stdout.flush()
     # body=driver.find_elements_by_css_selector('body')[0].get_attribute('innerHTML')
     ## get all outbound flight info, grabbing fare info
     body=BeautifulSoup(driver.find_elements_by_css_selector("body")[0].get_attribute('innerHTML'),features="lxml")
@@ -221,7 +229,11 @@ def getRoundTrip(src,dst,outDate,returnDate,returnObject=False):
         WebDriverWait(driver, timeout).until(element_present)
     except TimeoutException:
         print("Timed out waiting for page to load")
-    print("page loaded")
+
+
+    if not mute:
+        print("...",end ="")
+        sys.stdout.flush()
 
     ## grab all the individual cards for out boud flights
     #elements=driver.find_elements_by_css_selector("#air-booking-product-0 div span ul li")

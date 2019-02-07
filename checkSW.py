@@ -1,4 +1,5 @@
 import requests
+import time
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -41,12 +42,17 @@ def fetchWeekend(weekof,srcs,dsts):
     # iterate though all the possible destination combinations
     allOut=[]
     allBack=[]
+    progressTotal=len(srcs)*len(dsts)*4
+    print("progress ||"+("---")*progressTotal+"||\rprogress ||",end ="")
+    t = time.time()
     for src in srcs:
         for dst in dsts:
-            FridayOut,SundayBack=getRoundTrip(src,dst,friday,sunday,returnObject=True)
-            SaturdayOut,MondayBack=getRoundTrip(src,dst,saturday,monday,returnObject=True)
+
+            FridayOut,SundayBack=getRoundTrip(src,dst,friday,sunday,returnObject=True,mute=False)
+            SaturdayOut,MondayBack=getRoundTrip(src,dst,saturday,monday,returnObject=True,mute=False)
             allOut+=FridayOut+SaturdayOut
             allBack+=SundayBack+MondayBack
+    print("|| ({0:.1f}s elapsed)".format(time.time()-t))
 
     filteredOut=[]
     filteredReturn=[]
@@ -75,6 +81,7 @@ def dbAddFlight(flight):
 def dbAddFlights(flights):
     for flight in flights:
         dbAddFlight(flight)
+
 def dbAddWeekend(date,mySortedOut,mySortedBack,herSortedOut,herSortedBack):
     dbAddFlights(mySortedOut+mySortedBack+herSortedOut+herSortedBack)
     myTotal=mySortedOut[0].getBestFare().fare+mySortedBack[0].getBestFare().fare
@@ -88,6 +95,7 @@ def dbAddWeekend(date,mySortedOut,mySortedBack,herSortedOut,herSortedBack):
 if __name__=="__main__":
 
     # out,back=fetchWeekend(datetime(2019,3,22))
+    
     date=datetime(2019,3,22)
     friday=getFriday(date)
     mySortedOut,mySortedBack=fetchWeekend(date,['SFO','SJC'],['LAX'],)
@@ -96,7 +104,7 @@ if __name__=="__main__":
     print(color("Your Best Bet for the Weekend of "+datetime.strftime(friday,"%a %b %d %Y" )+" is...",'green'))
     print(color(str(bo),'blue'))
     print(color(str(br),'blue'))
-    print(color(str(bo+br),'orange'))
+    print(color("Total: "+str(bo+br),'green'))
     #print(color("Total: $"+str(bo.getBestFare().fare+br.getBestFare().fare)+"or("+str(bo.getBestFare().pts+br.getBestFare().pts)+" pts), earning "+str(bo.getBestFare().earn+br.getBestFare().earn)+"pts",'yeloow'))
 
     herSortedOut,herSortedBack=fetchWeekend(date,['LAX'],['SFO','SJC'])
@@ -105,7 +113,7 @@ if __name__=="__main__":
     print(color("Her Best Bet for the Weekend of "+datetime.strftime(friday,"%a %b %d %Y" )+" is...",'green'))
     print(color(str(hbo),'blue'))
     print(color(str(hbr),'blue'))
-    print(color(str(hbo+hbr),'orange'))
+    print(color("Total: "+str(hbo+hbr),'green'))
     #print(color("Total: $"+str(hbo.getBestFare().fare+hbr.getBestFare().fare)+"or("+str(hbo.getBestFare().pts+hbr.getBestFare().pts)+" pts), earning "+str(hbo.getBestFare().earn+hbr.getBestFare().earn)+"pts",'yeloow'))
 
     try:
