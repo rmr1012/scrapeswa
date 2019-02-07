@@ -10,9 +10,12 @@ if os.path.isfile(requirementPath):
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+import scrapeswa
+
+
 setuptools.setup(
     name="scrapeswa",
-    version="0.0.1",
+    version=scrapeswa.__version__,
     author="Dennis Ren",
     install_requires=install_requires,
     author_email="code@dennisren.com",

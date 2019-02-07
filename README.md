@@ -7,7 +7,9 @@ Have a great time scraping!
 -dr
 ## Requirements
 Python3
+
 Chrome Web Driver - get it here http://chromedriver.chromium.org/downloads
+
 See requirements.txt for python packages used, you don't need to worry about these if you use pip to install 
 ## Installation
 ```
