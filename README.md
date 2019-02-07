@@ -1,4 +1,4 @@
-#A Simple Scraper for Southwest Airlines
+# A Simple Scraper for Southwest Airlines
 
 Southwest doesn't provide a direct API to inquire their fares. Other flight fare APIs exist but most are paywalled. This simple scraper simply generate a URL for southwest's web UI and scraps its contents for information. Of course, doing this is rather slow(5-10s per scrape depending on your machine), but for most people who are only interested to automate some simple price checks, a few times day is more than enough. I have not noticed any anti-scraping or CAPTCHA on their site, so we can scrape forever in theory.
 
@@ -40,7 +40,7 @@ outbound[0].economy.__dict__
 {'flightClass': 'Economy', 'fare': 59, 'earn': 250, 'pts': 3242, 'ppd': 54.94915254237288, 'epd': 4.237288135593221}
 ```
 
-## Print human readable strings
+### Print human readable strings
 
 ```
 >>> print(outbound[0])
@@ -48,7 +48,7 @@ Flight:2994 Leaving LAX Sun 06:45 AM Arriving SFO Sun 08:10 AM
 Economy costs $59 (3242pts) earning 250 pts
 
 ```
-## Fare arithmitic
+### Fare arithmitic
 ```
 >>> sumFare = outbound[0] + outbound[1]
 >>> sumFare
@@ -56,7 +56,7 @@ Economy costs $59 (3242pts) earning 250 pts
 >>> print(sumFare)
 Economy costs $134 (7646pts) earning 589 pts
 ```
-### Get Round Trip (dictionary)
+## Get Round Trip (dictionary)
 ```
 >>> outbound, return = sswa.getRoundTrip('LAX','SFO',datetime(2019,5,5),datetime(2019,5,10))
 ```
