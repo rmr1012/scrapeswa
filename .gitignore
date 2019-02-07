@@ -1,2 +1,5 @@
-models.py
+*.egg-info/
+__pycache__/
 test/
+build/
+*.pyc
