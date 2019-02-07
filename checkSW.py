@@ -95,46 +95,35 @@ def dbAddWeekend(date,mySortedOut,mySortedBack,herSortedOut,herSortedBack):
 if __name__=="__main__":
 
     # out,back=fetchWeekend(datetime(2019,3,22))
-    
-    date=datetime(2019,3,22)
-    friday=getFriday(date)
-    mySortedOut,mySortedBack=fetchWeekend(date,['SFO','SJC'],['LAX'],)
-    bo=mySortedOut[0]
-    br=mySortedBack[0]
-    print(color("Your Best Bet for the Weekend of "+datetime.strftime(friday,"%a %b %d %Y" )+" is...",'green'))
-    print(color(str(bo),'blue'))
-    print(color(str(br),'blue'))
-    print(color("Total: "+str(bo+br),'green'))
-    #print(color("Total: $"+str(bo.getBestFare().fare+br.getBestFare().fare)+"or("+str(bo.getBestFare().pts+br.getBestFare().pts)+" pts), earning "+str(bo.getBestFare().earn+br.getBestFare().earn)+"pts",'yeloow'))
 
-    herSortedOut,herSortedBack=fetchWeekend(date,['LAX'],['SFO','SJC'])
-    hbo=herSortedOut[0]
-    hbr=herSortedBack[0]
-    print(color("Her Best Bet for the Weekend of "+datetime.strftime(friday,"%a %b %d %Y" )+" is...",'green'))
-    print(color(str(hbo),'blue'))
-    print(color(str(hbr),'blue'))
-    print(color("Total: "+str(hbo+hbr),'green'))
-    #print(color("Total: $"+str(hbo.getBestFare().fare+hbr.getBestFare().fare)+"or("+str(hbo.getBestFare().pts+hbr.getBestFare().pts)+" pts), earning "+str(hbo.getBestFare().earn+hbr.getBestFare().earn)+"pts",'yeloow'))
+    date=datetime.today()
 
-    try:
-        dbAddWeekend(friday,mySortedOut,mySortedBack,herSortedOut,herSortedBack)
-    except sqlalchemy.exc.OperationalError:
-        print("db file empty, creating schema...")
-        Base.metadata.create_all(engine)
-        print("schema created, writing data...")
-        session.rollback()
-        dbAddWeekend(friday,mySortedOut,mySortedBack,herSortedOut,herSortedBack)
-    #print(color("Total: $"+str(sortedOut[0][sortedOut[0]['bestAval']]['fare'] + sortedBack[0][sortedBack[0]['bestAval']]['fare'])+"(or "+str(sortedOut[0][sortedOut[0]['bestAval']]['pts'] + sortedBack[0][sortedBack[0]['bestAval']]['pts'])+"pts)"+" earning "+str(sortedOut[0][sortedOut[0]['bestAval']]['earn']+sortedBack[0][sortedBack[0]['bestAval']]['earn'])+' pts ','orange'))
+    for i in range(15):
+        date+=timedelta(days=7)
+        friday=getFriday(date)
+        mySortedOut,mySortedBack=fetchWeekend(date,['SFO','SJC'],['LAX'],)
+        bo=mySortedOut[0]
+        br=mySortedBack[0]
+        print(color("Your Best Bet for the Weekend of "+datetime.strftime(friday,"%a %b %d %Y" )+" is...",'green'))
+        print(color(str(bo),'blue'))
+        print(color(str(br),'blue'))
+        print(color("Total: "+str(bo+br),'green'))
+        #print(color("Total: $"+str(bo.getBestFare().fare+br.getBestFare().fare)+"or("+str(bo.getBestFare().pts+br.getBestFare().pts)+" pts), earning "+str(bo.getBestFare().earn+br.getBestFare().earn)+"pts",'yeloow'))
 
+        herSortedOut,herSortedBack=fetchWeekend(date,['LAX'],['SFO','SJC'])
+        hbo=herSortedOut[0]
+        hbr=herSortedBack[0]
+        print(color("Her Best Bet for the Weekend of "+datetime.strftime(friday,"%a %b %d %Y" )+" is...",'green'))
+        print(color(str(hbo),'blue'))
+        print(color(str(hbr),'blue'))
+        print(color("Total: "+str(hbo+hbr),'green'))
+        #print(color("Total: $"+str(hbo.getBestFare().fare+hbr.getBestFare().fare)+"or("+str(hbo.getBestFare().pts+hbr.getBestFare().pts)+" pts), earning "+str(hbo.getBestFare().earn+hbr.getBestFare().earn)+"pts",'yeloow'))
 
-    #herSortedOut,herSortedBack=fetchHerWeekend(date,['LAX','LGB'],['SFO','SJC'])
-
-    #out,back=getRoundTrip("LAX","SFO",datetime(2019,3,22),datetime(2019,3,25),returnObject=True)
-
-
-    # for i in range(1):
-    #     fetchMyWeekend(datetime(2019,2,15)+timedelta(days=i*7))
-    #     fetchHerWeekend(datetime(2019,2,15)+timedelta(days=i*7))
-#     main()
-# with open("card.html","r") as inFile:
-#     print(parseCard(inFile.read()),)
+        try:
+            dbAddWeekend(friday,mySortedOut,mySortedBack,herSortedOut,herSortedBack)
+        except sqlalchemy.exc.OperationalError:
+            print("db file empty, creating schema...")
+            Base.metadata.create_all(engine)
+            print("schema created, writing data...")
+            session.rollback()
+            dbAddWeekend(friday,mySortedOut,mySortedBack,herSortedOut,herSortedBack)
