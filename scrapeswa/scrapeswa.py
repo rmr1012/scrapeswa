@@ -56,6 +56,9 @@ class SWAFlight(object):
         printstr+= str(self.getBestFare())
 
         return printstr
+    def __add__(self, anotherFlight):
+        return Fare(self.getBestFare().flightClass,self.getBestFare().fare+anotherFlight.getBestFare().fare,self.getBestFare().earn+anotherFlight.getBestFare().earn,self.getBestFare().pts+anotherFlight.getBestFare().pts)
+
     def getBestFare(self):
         if self.economy is not None:
             return self.economy
@@ -89,9 +92,9 @@ def getSWURL(src,dst,outDate,inDate,pts=False):
     url = endpoint+"?int=HOMEQBOMAIR&"+qstr
     return url
 
-def parseCard(html,date):
+def parseCard(soup,date):
     results={'Flight':None,'Leave':None,'Arrive':None,'src':None,'dst':None,'bestAval':'Economy','Business':{'fare':None,'earn':None,'pts':None,'ppd':None,'epd':None},'Anytime':{'fare':None,'earn':None,'pts':None,'ppd':None,'epd':None},'Economy':{'fare':None,'earn':None,'pts':None,'ppd':None,'epd':None}}
-    soup=BeautifulSoup(html,features="lxml")
+    #soup=BeautifulSoup(html,features="lxml")
 
     try:
         results['Flight']=re.search(r'[0-9]{1,4}',soup.select_one('.flight-numbers--flight-number .actionable--text').text,re.M).group()
@@ -115,6 +118,7 @@ def parseCard(html,date):
                 result=findFarePts.search(infoLabel)
                 results["Economy"]['fare']=int(result.group(1))
                 results["Economy"]['earn']=int(result.group(2))
+        print(results)
         return results
             # return(html) # {Flight:123,Leave:Datetime,Arrive:Datetime,bestAval:'Anytime',Business:{fare:None,earn:None,pts:None},Anytime:{fare:120,earn:2500,pts:4500},Economy:{fare:120,earn:2500,pts:4500}}
 
@@ -126,9 +130,9 @@ def parseCard(html,date):
 
 # def main():
 
-def parseCardPts(html,dataset): # use html to fill in the blank for dataset
+def parseCardPts(soup,dataset): # use html to fill in the blank for dataset
     # results={'Flight':None,'Leave':None,'Arrive':None,'bestAval':'Anytime','Business':{'fare':None,'earn':None,'pts':None,'ppd':None,'epd':None},'Anytime':{'fare':None,'earn':None,'pts':None,'ppd':None,'epd':None},'Economy':{'fare':None,'earn':None,'pts':None,'ppd':None,'epd':None}}
-    soup=BeautifulSoup(html,features="lxml")
+    #soup=BeautifulSoup(html,features="lxml")
     rawtxt=soup.text
     #print(rawtxt)
     # try:
@@ -177,22 +181,25 @@ def getRoundTrip(src,dst,outDate,returnDate,returnObject=False):
 
     ## wail untill page is fully loaded
     driver.get(url)
-    timeout = 10
+    timeout = 20
     try:
         element_present = EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-product-0 div div div div div div span div div fieldset div div .input--text'))
         WebDriverWait(driver, timeout).until(element_present)
     except TimeoutException:
         print("Timed out waiting for page to load")
-
+        print(url)
+        return
+    # body=driver.find_elements_by_css_selector('body')[0].get_attribute('innerHTML')
     ## get all outbound flight info, grabbing fare info
-    elements=driver.find_elements_by_css_selector("#air-booking-product-0 div span ul li")
-    for element in elements:
-        outBound+= filter(None, [parseCard(str(element.get_attribute('innerHTML')),outDate)])
+    body=BeautifulSoup(driver.find_elements_by_css_selector("body")[0].get_attribute('innerHTML'),features="lxml")
+
+    for element in body.select('#air-booking-product-0 div span ul li'):
+        outBound+= filter(None, [parseCard(element,outDate)])
 
     ## get all return flight info, grabbing fare info
-    elements=driver.find_elements_by_css_selector("#air-booking-product-1 div span ul li")
-    for element in elements:
-        returnBound+= filter(None, [parseCard(str(element.get_attribute('innerHTML')),returnDate)])
+    #elements=driver.find_elements_by_css_selector("#air-booking-product-1 div span ul li")
+    for element in body.select('#air-booking-product-1 div span ul li'):
+        returnBound+= filter(None, [parseCard(element,returnDate)])
 
     # fill in additional info for the flight dictionary
     for flight in outBound: # designate src and dst
@@ -208,7 +215,7 @@ def getRoundTrip(src,dst,outDate,returnDate,returnObject=False):
     driver.get(url)
 
     ## Wait untill page is fully loaded, using this element as a indicator
-    timeout = 10
+    timeout = 20
     try:
         element_present = EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-product-0 div div div div div div span div div fieldset div div .input--text'))
         WebDriverWait(driver, timeout).until(element_present)
@@ -217,14 +224,16 @@ def getRoundTrip(src,dst,outDate,returnDate,returnObject=False):
     print("page loaded")
 
     ## grab all the individual cards for out boud flights
-    elements=driver.find_elements_by_css_selector("#air-booking-product-0 div span ul li")
-    for element in elements:
-        parseCardPts(str(element.get_attribute('innerHTML')) , outBound)
+    #elements=driver.find_elements_by_css_selector("#air-booking-product-0 div span ul li")
+    body=BeautifulSoup(driver.find_elements_by_css_selector("body")[0].get_attribute('innerHTML'),features="lxml")
+
+    for element in body.select('#air-booking-product-0 div span ul li'):
+        parseCardPts(element , outBound)
 
     ## grab all the individual cards for return bound flights
-    elements=driver.find_elements_by_css_selector("#air-booking-product-1 div span ul li")
-    for element in elements:
-        parseCardPts(str(element.get_attribute('innerHTML')) , returnBound)
+    #elements=driver.find_elements_by_css_selector("#air-booking-product-1 div span ul li")
+    for element in body.select('#air-booking-product-1 div span ul li'):
+        parseCardPts(element , returnBound)
 
     ## return results
     if returnObject:
