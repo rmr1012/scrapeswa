@@ -22,7 +22,7 @@ def flightFactory(params):
     businessFare=Fare("Business",params["Business"]["fare"],params["Business"]["earn"],params["Business"]["pts"])
     anytimeFare=Fare("Anytime",params["Anytime"]["fare"],params["Anytime"]["earn"],params["Anytime"]["pts"])
 
-    flight=SWAFlight(params["Flight"],params["src"],params["dst"],economyFare,anytimeFare,businessFare)
+    flight=SWAFlight(params["Flight"],params["src"],params["dst"],params["Leave"],params["Arrive"],economyFare,anytimeFare,businessFare)
 
     return flight
 class Fare(object):
@@ -39,16 +39,20 @@ class Fare(object):
         return self.flightClass+" costs $"+str(self.fare)+" ("+str(self.pts)+"pts)"+" earning "+str(self.earn)+" pts"
 
 class SWAFlight(object):
-    def __init__(self,flightNum,src,dst,economyFare,anytimeFare,businessFare):
+    dbid=None
+    def __init__(self,flightNum,src,dst,leave,arrive,economyFare,anytimeFare,businessFare):
         self.flight=flightNum
         self.src=src
         self.dst=dst
         self.economy=economyFare
         self.anytime=anytimeFare
         self.business=businessFare
+        self.leave=leave
+        self.arrive=arrive
     def __str__(self):
         printstr= ''
-        printstr+= "Flight:"+str(sortedOut[0]["Flight"])+" Leaving "+sortedOut[0]['src']+" "+datetime.strftime(sortedOut[0]['Leave'],"%a '%I:%M %p") + "\n"
+        printstr+= "Flight:"+str(self.flight)+" Leaving "+self.src+" "+datetime.strftime(self.leave,"%a %I:%M %p")
+        printstr+= " Arriving "+self.dst+" "+datetime.strftime(self.arrive,"%a %I:%M %p") + "\n"
         printstr+= str(self.getBestFare())
 
         return printstr
