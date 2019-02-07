@@ -1,3 +1,4 @@
+*test.py
 *.egg-info/
 __pycache__/
 test/

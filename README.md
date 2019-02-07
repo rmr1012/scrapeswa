@@ -2,8 +2,13 @@
 
 Southwest doesn't provide a direct API to inquire their fares. Other flight fare APIs exist but most are paywalled. This simple scraper simply generate a URL for southwest's web UI and scraps its contents for information. Of course, doing this is rather slow(5-10s per scrape depending on your machine), but for most people who are only interested to automate some simple price checks, a few times day is more than enough. I have not noticed any anti-scraping or CAPTCHA on their site, so we can scrape forever in theory.
 
-Have time scraping!
+Have a great time scraping!
 
+-dr
+## Requirements
+Python3
+Chrome Web Driver - get it here http://chromedriver.chromium.org/downloads
+See requirements.txt for python packages used, you don't need to worry about these if you use pip to install 
 ## Installation
 ```
 pip install scrapeswa
@@ -68,3 +73,14 @@ Returns two list of outbound and return flight info dictionaries
 
 {'Flight': '1077', 'Leave': datetime.datetime(2019, 5, 10, 21, 25), 'Arrive': datetime.datetime(2019, 5, 10, 22, 55), 'src': 'SFO', 'dst': 'LAX', 'bestAval': 'Economy', 'Business': {'fare': 253, 'earn': 2665, 'pts': 17319, 'ppd': 68.45, 'epd': 10.53}, 'Anytime': {'fare': 225, 'earn': 1960, 'pts': 15287, 'ppd': 67.94, 'epd': 8.71}, 'Economy': {'fare': 75, 'earn': 339, 'pts': 4404, 'ppd': 58.72, 'epd': 4.52}}])
 ```
+## Non-pip utilities
+If you check out this repository, you will be able to use a few more utilities built based on this tool.
+
+#### checkSW.py
+This is a tool I built to figure out who shouhld visit who bwtween my girlfriend and I. If you're in a long distance relationship, this tool could really help you. I'm still working on perfecting the batch scrape ability of this script. Next step is to set it up in crontab to run daily and populate everyday's results in a database, then build a data visualizer to get a good idea of ticket pricing trends and best course of action to see my beloved.
+
+#### models.py
+A sqlalchemy ORM built to help orginize the scraped data
+
+#### card.html
+A snippet of a single flight card from a fully loaded page. Helps you understand how the scraper is built
