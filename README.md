@@ -1,3 +1,6 @@
+# DEPRECIATED
+SWS has upgraded their website to reject non-human agents. This library currently doesn't work. If you are interested to make it work again, please help with the hack and submit a pull request.
+
 # A Simple Scraper for Southwest Airlines
 
 Southwest doesn't provide a direct API to inquire their fares. Other flight fare APIs exist but most are paywalled. This simple scraper simply generate a URL for southwest's web UI and scraps its contents for information. Of course, doing this is rather slow(5-10s per scrape depending on your machine), but for most people who are only interested to automate some simple price checks, a few times day is more than enough. I have not noticed any anti-scraping or CAPTCHA on their site, so we can scrape forever in theory.
