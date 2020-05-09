@@ -10,9 +10,10 @@ from selenium.common.exceptions import TimeoutException
 options = webdriver.ChromeOptions()
 options.add_argument('headless')
 options.add_argument('window-size=1200x600')
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_experimental_option('useAutomationExtension', False)
 driver = webdriver.Chrome(options=options)
 
-# https://stackoverflow.com/questions/53039551/selenium-webdriver-modifying-navigator-webdriver-flag-to-prevent-selenium-detec
 driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
   "source": """
     Object.defineProperty(navigator, 'webdriver', {
@@ -20,6 +21,8 @@ driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
     })
   """
 })
+
+driver.execute_cdp_cmd("Network.enable", {})
 
 from colors import *
 import re
