@@ -10,7 +10,20 @@ from selenium.common.exceptions import TimeoutException
 options = webdriver.ChromeOptions()
 options.add_argument('headless')
 options.add_argument('window-size=1200x600')
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.add_experimental_option('useAutomationExtension', False)
 driver = webdriver.Chrome(options=options)
+
+driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+  "source": """
+    Object.defineProperty(navigator, 'webdriver', {
+      get: () => undefined
+    })
+  """
+})
+
+driver.execute_cdp_cmd("Network.enable", {})
+
 from colors import *
 import re
 from datetime import datetime,timedelta
@@ -174,6 +187,19 @@ def getFriday(date):
 
 
 
+def getWithRetries(url, wait_until, timeout=20, retries=3):
+    for n_try in range(retries):
+        driver.get(url)
+        try:
+            WebDriverWait(driver, timeout).until(wait_until)
+            return
+        except TimeoutException as ex:
+            failure = ex
+    print("Timed out waiting for page to load")
+    print(url)
+    raise failure
+
+
 def getRoundTrip(src,dst,outDate,returnDate,returnObject=False,mute=True):
     # print("lol")
     # print(progressTotal)
@@ -185,15 +211,11 @@ def getRoundTrip(src,dst,outDate,returnDate,returnObject=False,mute=True):
     url=getSWURL(src,dst,outDate,returnDate)
 
     ## wail untill page is fully loaded
-    driver.get(url)
-    timeout = 20
     try:
-        element_present = EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-product-0 div div div div div div span div div fieldset div div .input--text'))
-        WebDriverWait(driver, timeout).until(element_present)
+        getWithRetries(url, EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-fares-0-1 > div.fare-button.fare-button_primary-yellow.select-detail--fare > button')))
     except TimeoutException:
-        print("Timed out waiting for page to load")
-        print(url)
         return
+
     if not mute:
         print("...",end ="")
         sys.stdout.flush()
@@ -218,17 +240,12 @@ def getRoundTrip(src,dst,outDate,returnDate,returnObject=False,mute=True):
         flight['dst']=src
 
     #### now, fill in the blank for point cost
-
-    url=getSWURL(src,dst,outDate,returnDate,pts=True)
-    driver.get(url)
-
     ## Wait untill page is fully loaded, using this element as a indicator
-    timeout = 20
+    url=getSWURL(src,dst,outDate,returnDate,pts=True)
     try:
-        element_present = EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-product-0 div div div div div div span div div fieldset div div .input--text'))
-        WebDriverWait(driver, timeout).until(element_present)
+        getWithRetries(url, EC.presence_of_element_located((By.CSS_SELECTOR,'#air-booking-fares-0-1 > div.fare-button.fare-button_primary-yellow.select-detail--fare > button')))
     except TimeoutException:
-        print("Timed out waiting for page to load")
+        return
 
 
     if not mute:
